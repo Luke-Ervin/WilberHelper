@@ -1,0 +1,12 @@
+name: WilberHelper
+version: 2.0.0
+main: me.luke.wilberhelper.WilberHelper
+api-version: '1.21'
+
+depend:
+  - Vault
+
+commands:
+  wilber:
+    description: Wilber the Merchant command
+    usage: /wilber offering
