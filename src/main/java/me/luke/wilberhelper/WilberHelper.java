@@ -27,6 +27,36 @@ public final class WilberHelper extends JavaPlugin {
     private static final int MIN_Z = -128;
     private static final int MAX_Z = -108;
 
+    private static final String[] POWER_ON_COMMANDS = {
+            "setblock -52 -11 -125 minecraft:redstone_block",
+            "setblock -40 -11 -125 minecraft:redstone_block"
+    };
+
+    private static final String[] POWER_OFF_COMMANDS = {
+            "setblock -52 -11 -125 minecraft:air",
+            "setblock -40 -11 -125 minecraft:air"
+    };
+
+    private static final String[][] GLASS_LOCATIONS = {
+            {"-47", "-15", "-124"},
+            {"-46", "-15", "-123"},
+            {"-45", "-15", "-124"},
+            {"-46", "-15", "-121"},
+            {"-47", "-15", "-120"},
+            {"-45", "-15", "-120"},
+            {"-46", "-15", "-119"}
+    };
+
+    private static final String[] GLASS_COLORS = {
+            "red_stained_glass",
+            "yellow_stained_glass",
+            "lime_stained_glass",
+            "orange_stained_glass",
+            "light_blue_stained_glass"
+    };
+
+    private static final int GLASS_ANIMATION_DURATION = 1500;
+
     private boolean isInStereoRegion(Player player) {
         if (!player.getWorld().getName().equalsIgnoreCase(STEREO_WORLD)) return false;
 
@@ -44,34 +74,14 @@ public final class WilberHelper extends JavaPlugin {
     // =========================================================
     private void startGlassAnimation() {
 
-        final String[][] GLASS = {
-                {"-47", "-15", "-124"},
-                {"-46", "-15", "-123"},
-                {"-45", "-15", "-124"},
-                {"-46", "-15", "-121"},
-                {"-47", "-15", "-120"},
-                {"-45", "-15", "-120"},
-                {"-46", "-15", "-119"}
-        };
-
-        final String[] COLORS = {
-                "red_stained_glass",
-                "yellow_stained_glass",
-                "lime_stained_glass",
-                "orange_stained_glass",
-                "light_blue_stained_glass"
-        };
-
-        final int TOTAL_DURATION = 1500;
-
         new BukkitRunnable() {
             int elapsed = 0;
 
             @Override
             public void run() {
 
-                if (elapsed >= TOTAL_DURATION) {
-                    for (String[] g : GLASS) {
+                if (elapsed >= GLASS_ANIMATION_DURATION) {
+                    for (String[] g : GLASS_LOCATIONS) {
                         Bukkit.dispatchCommand(
                                 Bukkit.getConsoleSender(),
                                 "setblock " + g[0] + " " + g[1] + " " + g[2] + " minecraft:orange_stained_glass"
@@ -81,8 +91,8 @@ public final class WilberHelper extends JavaPlugin {
                     return;
                 }
 
-                for (String[] g : GLASS) {
-                    String color = COLORS[ThreadLocalRandom.current().nextInt(COLORS.length)];
+                for (String[] g : GLASS_LOCATIONS) {
+                    String color = GLASS_COLORS[ThreadLocalRandom.current().nextInt(GLASS_COLORS.length)];
                     Bukkit.dispatchCommand(
                             Bukkit.getConsoleSender(),
                             "setblock " + g[0] + " " + g[1] + " " + g[2] + " minecraft:" + color
@@ -111,24 +121,14 @@ public final class WilberHelper extends JavaPlugin {
                     return;
                 }
 
-                String[] powerOn = {
-                        "setblock -52 -11 -125 minecraft:redstone_block",
-                        "setblock -40 -11 -125 minecraft:redstone_block"
-                };
-
-                String[] powerOff = {
-                        "setblock -52 -11 -125 minecraft:air",
-                        "setblock -40 -11 -125 minecraft:air"
-                };
-
-                for (String cmd : powerOn) {
+                for (String cmd : POWER_ON_COMMANDS) {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
                 }
 
                 Bukkit.getScheduler().runTaskLater(
                         this.getPlugin(),
                         () -> {
-                            for (String cmd : powerOff) {
+                            for (String cmd : POWER_OFF_COMMANDS) {
                                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
                             }
                         },
@@ -158,6 +158,18 @@ public final class WilberHelper extends JavaPlugin {
             {"-49", "-14", "-119", "south"},
             {"-43", "-14", "-119", "south"}
     };
+
+    private static final String[] MUSIC_POSITIONS = {
+            "-48 -12 -128",
+            "-44 -12 -128",
+            "-49 -12 -119",
+            "-43 -12 -119"
+    };
+
+    private static final String MUSIC_COMMAND_FORMAT =
+            "playsound minecraft:music_disc.lava_chicken master @a %s 1.5 %s";
+
+    private static final long ADDITIONAL_BELL_START_TICKS = (49 * 20L) - 4; // 4 ticks before 49 seconds
 
     // =========================================================
     // ENABLE
@@ -229,19 +241,16 @@ public final class WilberHelper extends JavaPlugin {
         long bellDelay = Math.round(184 / pitch);
 
         // ---- MUSIC ----
-        String[] sounds = {
-                "playsound minecraft:music_disc.lava_chicken master @a -48 -12 -128 1.5 " + pitch,
-                "playsound minecraft:music_disc.lava_chicken master @a -44 -12 -128 1.5 " + pitch,
-                "playsound minecraft:music_disc.lava_chicken master @a -49 -12 -119 1.5 " + pitch,
-                "playsound minecraft:music_disc.lava_chicken master @a -43 -12 -119 1.5 " + pitch
-        };
-
-        for (String cmd : sounds) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+        for (String position : MUSIC_POSITIONS) {
+            Bukkit.dispatchCommand(
+                    Bukkit.getConsoleSender(),
+                    MUSIC_COMMAND_FORMAT.formatted(position, pitch)
+            );
         }
 
         // ---- EFFECTS ----
         scheduleBellRings(bellDelay);
+        scheduleBellRings(ADDITIONAL_BELL_START_TICKS);
         startGolemDance();
         startGlassAnimation();
 
